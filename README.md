@@ -1,115 +1,109 @@
+# DISCLAIMER
+This is a lua implementation of https://github.com/ddl004/poop.nvim I created because I couldn't figure out how to use pynvim 🤦.
+
+All credit goes to ddl004.
+
+I'm not going to maintain this and the repo only servers as a way for testing ddl004/poop.nvim without having to set up pynvim if you are having trouble doing that.
+
 # 💩 poop.nvim
 A neovim plugin to help embrace the code smell.
 
 ![Peek 2024-01-02 20-46](https://github.com/ddl004/poop.nvim/assets/18647028/236436d8-971e-4880-bb3c-15de9e1c6827)
 
 ## Features
-- Call `:Eject` to eject from the current cursor position!
-    - Takes two arguments, `left` and `right`. e.g. `:Eject 💩 💀`
+- Call `eject` to eject from the current cursor position!
+    - Takes two arguments, `left` and `right`. e.g. `:lua require('poop').setup().eject(💩,💀)`
 - Option for customizing the projectile ejected and animation properties.
 - Optional configuration provided to eject emojis randomly while in insert mode.
 
 ## Installation
-- This is a remote plugin written in Python, so you will need `pynvim` to install this plugin. See the installation instructions here: [pynvim](https://github.com/neovim/pynvim?tab=readme-ov-file#install).
 
-Install this plugin using your plugin manager. With [vim-plug](https://github.com/junegunn/vim-plug), add:
-```
-Plug 'ddl004/poop.nvim'
-```
-and call `:PlugInstall` followed by `:UpdateRemotePlugins`.
+With [lazy.nvim](https://github.com/folke/lazy.nvim):
 
-### Optional - Tested on Neovim >= v0.10
+<details>
+<summary>simple setup (ejects poop all the time)</summary>
 
-In your `init.lua` file, add the following to periodically eject when in insert mode.
-If you are using [lazy.nvim](https://github.com/folke/lazy.nvim), you can add this to the `config()` function for this plugin. 
-
-You can edit the local variables `emojis` and `period` to modify the emojis ejected and the frequency of the ejection respectively.
 ```lua
-local emojis = {'💩', '💀', '👻'}  -- edit these to include the emojis you want ejected
-local period = 10 -- edit this to change the frequency of ejection
+return {
+  "mblarsen/poop.nvim",
+  config = function()
+    local poop = require('my-plugins.poop').setup()
 
-vim.on_key(
-    function(key)
-        if vim.api.nvim_get_mode().mode ~= "i" then
-            return
-        end
-        vim.schedule_wrap(
-            function()
-                local left = emojis[math.random(1, #emojis)]
-                local right = emojis[math.random(1, #emojis)]
-                local should_eject = math.random(1, period) == 1
+    vim.on_key(function()
+      if vim.api.nvim_get_mode().mode ~= 'i' then
+        return
+      end
 
-                if should_eject then
-                    vim.cmd.Eject(left, right)
-                end
-            end
-        )()
-    end,
-    nil
-)
+      vim.schedule_wrap(function()
+        poop.eject()
+      end)()
+    end, nil)
+
+  end
+}
 ```
+</details>
 
-On previous versions of Neovim, you may run into issues with telescope or other plugins that also include floating windows.
-You can use this modified configuration to exclude certain filetypes (e.g. `TelescopePrompt`).
+<details>
+<summary>ejects poop occasionally</summary>
+
 ```lua
-local emojis = {'💩', '💀', '👻'}  -- edit these to include the emojis you want ejected
-local period = 10 -- edit this to change the frequency of ejection
-local excluded_fts = {"TelescopePrompt"}
+return {
+  "mblarsen/poop.nvim",
+  config = function()
+    local poop = require('my-plugins.poop').setup()
 
-local function is_fts_excluded(buf_ft, excluded_fts)
-    for _, ft in ipairs(excluded_fts) do
-        if buf_ft == ft then
-            return true
+    local period = 10
+
+    vim.on_key(function()
+      if vim.api.nvim_get_mode().mode ~= 'i' then
+        return
+      end
+
+      vim.schedule_wrap(function()
+        local should_eject = math.random(1, period) == 1
+        if should_eject then
+          poop.eject()
         end
-    end
-    return false
-end
+      end)()
+    end, nil)
 
-vim.on_key(
-    function(key)
-        if
-            vim.api.nvim_get_mode().mode ~= "i" or
-                is_fts_excluded(vim.api.nvim_get_option_value("filetype", {}), excluded_fts)
-         then
-            return
-        end
-        vim.schedule_wrap(
-            function()
-                local left = emojis[math.random(1, #emojis)]
-                local right = emojis[math.random(1, #emojis)]
-                local should_eject = math.random(1, period) == 1
-
-                if should_eject then
-                    vim.cmd.Eject(left, right)
-                end
-            end
-        )()
-    end,
-    nil
-)
+  end
+}
 ```
+</details>
 
-## Configuration
-These options are used by the `:Eject` command.
+<details>
+<summary>ejects multiple emojis</summary>
 
-### Options
-| Option         | Description                                                            | Default |
-|----------------|------------------------------------------------------------------------|---------|
-| `eject_emoji`  | The default emoji that is ejected.                                     | 💩      |
-| `eject_speed`  | Increase/decrease to change the speed of the projectile being ejected. | 100     |
-| `eject_angle`  | Angle at which the projectile is ejected.                              | 20      |
-| `eject_frames` | Number of frames in the animation.                                     | 120     |
-| `eject_delay`  | Delay in seconds between each frame.                                   | 0.002   |
-
-
-You can set these in your `init.lua` as follows:
 ```lua
-vim.g.eject_emoji = '💩'
+return {
+  "mblarsen/poop.nvim",
+  config = function()
+    local poop = require('my-plugins.poop').setup()
+    local emojis = { '💩', '🌈', '👻' }
+
+    local period = 10
+
+    vim.on_key(function()
+      if vim.api.nvim_get_mode().mode ~= 'i' then
+        return
+      end
+
+      vim.schedule_wrap(function()
+        local left = emojis[math.random(1, #emojis)]
+        local right = emojis[math.random(1, #emojis)]
+        local should_eject = math.random(1, period) == 1
+        if should_eject then
+          poop.eject(left, right)
+        end
+      end)()
+    end, nil)
+
+  end
+}
 ```
-or in `init.vim`:
-```vim
-let g:eject_emoji = '💩'
-```
+</details>
 
 ## License
 This project is licensed under the MIT License.
